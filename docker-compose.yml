@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+
+  juice-inventory:
+    image: go-juice-inventory:latest
+    build: .
+    container_name: go-juice-inventory
+    env_file:
+    - .env
+    volumes:
+    - .:/go/src
+    ports:
+    - 8090:8090
+    links:
+    - inventory-postgres
+    depends_on:
+    - inventory-postgres
+
+  inventory-postgres:
+    image: postgres:10.1-alpine
+    container_name: inventory-postgres
+    environment:
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_DB=${POSTGRES_DB}
+    - POSTGRES_HOST=${POSTGRES_HOST}
+    ports:
+    - 5432:5432
+    volumes:
+    - postgres_data:/var/lib/postgresql/data/
+
+volumes:
+  postgres_data:

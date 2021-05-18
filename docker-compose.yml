@@ -17,7 +17,7 @@ services:
     - inventory-postgres
 
   inventory-postgres:
-    image: postgres:10.1-alpine
+    image: postgres:13.3-alpine
     container_name: inventory-postgres
     environment:
     - POSTGRES_USER=${POSTGRES_USER}

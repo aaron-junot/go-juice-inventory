@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"database/sql"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -93,7 +95,48 @@ func setUpDb(db *sql.DB) {
 	_, err = db.Exec(createTable)
 	CheckError(err)
 
+	populateData(db)
+
 	fmt.Println("Sucessfully set up database")
+}
+
+func populateData(db *sql.DB) {
+	var count int
+
+	err := db.QueryRow("SELECT COUNT(*) FROM juice").Scan(&count)
+	CheckError(err)
+
+	// Only need to populate if it's not already populated
+	if count > 0 {
+		fmt.Println("Sucessfully inserted rows into the juice table")
+		return
+	}
+
+	insertJuices := `INSERT INTO juice (name, expiration) VALUES `
+	juiceNames, err := os.Open("src/juices.txt")
+	CheckError(err)
+	defer juiceNames.Close()
+
+	scnr := bufio.NewScanner(juiceNames)
+	scnr.Split(bufio.ScanLines)
+
+	for scnr.Scan() {
+		insertJuices = insertJuices + "('" + scnr.Text() + "', '" + randate().Format("Jan-02-06") + "'),\n"
+	}
+	insertJuices = insertJuices[:len(insertJuices)-2]
+	insertJuices = insertJuices + ";"
+
+	_, err = db.Exec(insertJuices)
+	CheckError(err)
+	fmt.Println("Sucessfully inserted rows into the juice table")
+}
+
+// Generates a random date somewhere between now and 1 year from now
+func randate() time.Time {
+	var delta int64 = 31557600
+
+	sec := rand.Int63n(delta) + time.Now().Unix()
+	return time.Unix(sec, 0)
 }
 
 func startServer() {

@@ -52,6 +52,7 @@ POSTGRES_USER=postgres \
     POSTGRES_DB=postgres \
     POSTGRES_HOST=localhost\
     POSTGRES_PORT=5432 \
+    JUICE_PATH=data/juices.txt \
     go run main.go
 ```
 If using a debugger such as [delve](https://github.com/go-delve/delve), be sure to invoke the debugger as well:
@@ -61,10 +62,6 @@ POSTGRES_USER=postgres \
     POSTGRES_DB=postgres \
     POSTGRES_HOST=localhost\
     POSTGRES_PORT=5432 \
+    JUICE_PATH=data/juices.txt \
     dlv debug main.go
-```
-You'll also need to copy the `juices.txt` file over to `src/juices.txt` because that's where it exists in the container:
-```bash
-mkdir -p src/
-cp juices.txt src/juices.txt
 ```

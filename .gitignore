@@ -16,6 +16,3 @@
 
 # compiled binary
 go-juice-inventory
-
-# extras for debugging
-src/

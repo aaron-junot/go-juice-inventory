@@ -63,3 +63,8 @@ POSTGRES_USER=postgres \
     POSTGRES_PORT=5432 \
     dlv debug main.go
 ```
+You'll also need to copy the `juices.txt` file over to `src/juices.txt` because that's where it exists in the container:
+```bash
+mkdir -p src/
+cp juices.txt src/juices.txt
+```

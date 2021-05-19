@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -17,6 +18,12 @@ import (
 
 var db *sql.DB
 var once sync.Once
+
+type juice struct {
+	Id         int64     `json:"id"`
+	Name       string    `json:"name"`
+	Expiration time.Time `json:"expiration"`
+}
 
 func main() {
 	fmt.Println("Starting up!")
@@ -64,7 +71,24 @@ func StockDisplayHandler(w http.ResponseWriter, req *http.Request) {
 	CheckError(err)
 
 	defer rows.Close()
-	fmt.Fprintf(w, "This is the inventory:\n")
+
+	var juiceSlice []juice
+
+	for rows.Next() {
+		var (
+			id         int64
+			name       string
+			expiration time.Time
+		)
+		err := rows.Scan(&id, &name, &expiration)
+		CheckError(err)
+		juiceSlice = append(juiceSlice, juice{Id: id, Name: name, Expiration: expiration})
+	}
+	prettyJSON, err := json.MarshalIndent(juiceSlice, "", "    ")
+	CheckError(err)
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, "%s\n", prettyJSON)
 }
 
 /*

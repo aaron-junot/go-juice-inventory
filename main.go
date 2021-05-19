@@ -8,15 +8,19 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
 
+var db *sql.DB
+var once sync.Once
+
 func main() {
 	fmt.Println("Starting up!")
-	db := connectToPostgres()
+	db := getDbInstance()
 
 	defer db.Close()
 
@@ -56,6 +60,10 @@ func DeleteHandler(w http.ResponseWriter, req *http.Request) {
  * GET /products
  */
 func StockDisplayHandler(w http.ResponseWriter, req *http.Request) {
+	rows, err := db.Query("SELECT * FROM juice LIMIT 200;")
+	CheckError(err)
+
+	defer rows.Close()
 	fmt.Fprintf(w, "This is the inventory:\n")
 }
 
@@ -63,22 +71,29 @@ func StockDisplayHandler(w http.ResponseWriter, req *http.Request) {
  * Utility Functions
  */
 
-func connectToPostgres() *sql.DB {
-	host := os.Getenv("POSTGRES_HOST")
-	port, e := strconv.Atoi(os.Getenv("POSTGRES_PORT"))
-	user := os.Getenv("POSTGRES_USER")
-	password := os.Getenv("POSTGRES_PASSWORD")
-	dbname := os.Getenv("POSTGRES_DB")
+func getDbInstance() *sql.DB {
+	if db == nil {
+		once.Do(
+			func() {
+				fmt.Println("Creating a single instance of database")
+				host := os.Getenv("POSTGRES_HOST")
+				port, e := strconv.Atoi(os.Getenv("POSTGRES_PORT"))
+				user := os.Getenv("POSTGRES_USER")
+				password := os.Getenv("POSTGRES_PASSWORD")
+				dbname := os.Getenv("POSTGRES_DB")
 
-	if e != nil {
-		fmt.Println("Invalid port, using 5432 instead")
-		port = 5432
+				if e != nil {
+					fmt.Println("Invalid port, using 5432 instead")
+					port = 5432
+				}
+				psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+				fmt.Println(psqlconn)
+
+				temp, err := sql.Open("postgres", psqlconn)
+				db = temp
+				CheckError(err)
+			})
 	}
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-	fmt.Println(psqlconn)
-
-	db, err := sql.Open("postgres", psqlconn)
-	CheckError(err)
 	return db
 }
 

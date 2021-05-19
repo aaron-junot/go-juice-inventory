@@ -59,8 +59,16 @@ func HomeHandler(w http.ResponseWriter, req *http.Request) {
  */
 func DeleteHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	fmt.Println("Successfully deleted", vars["id"])
-	fmt.Fprintf(w, "Successfully deleted %s\n", vars["id"])
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	CheckError(err)
+
+	result, err := db.Exec("DELETE FROM juice WHERE id = $1", id)
+	CheckError(err)
+	rowsAffected, err := result.RowsAffected()
+	CheckError(err)
+
+	fmt.Printf("Successfully performed delete on id %d. Rows affected: %d\n", id, rowsAffected)
+	w.WriteHeader(http.StatusOK)
 }
 
 /*
